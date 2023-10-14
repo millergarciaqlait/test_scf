@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Buscador de Facebook</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+</head>
+<body>
+    <div class="container">
+        <h1 class="mt-4">Buscador de Facebook</h1>
+        <form id="search-form" class="mt-4">
+            <div class="form-group">
+                <label for="search_request">Búsqueda:</label>
+                <input type="text" class="form-control" id="search_request" name="search_request" placeholder="Escribe tu búsqueda">
+            </div>
+            <div class="form-group">
+                <label for="search_type">Tipo de búsqueda:</label>
+                <select class="form-control" id="search_type" name="search_type">
+                    <option value="PAGES">PAGES</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="is_verified">Verificado:</label>
+                <select class="form-control" id="is_verified" name="is_verified">
+                    <option value="null">No importa</option>
+                    <option value="true">Verificado</option>
+                    <option value="false">No verificado</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="category_id">Categoría:</label>
+                <select class="form-control" id="category_id" name="category_id">
+                    <option value="0">Ninguno</option>
+                    <option value="1006">Lugar o negocio local</option>
+                    <option value="1013">Empresa, organización o institución</option>
+                    <option value="1009">Marca o producto</option>
+                    <option value="1007">Artista, grupo musical o figura pública</option>
+                    <option value="1019">Entretenimiento</option>
+                    <option value="2612">Causa o Comunidad</option>
+                </select>
+            </div>
+            <button type="submit" class="btn btn-primary">Buscar</button>
+        </form>
+
+        <div id="search-results" class="mt-4">
+            
+        </div>
+        <div id="loading-spinner" class="d-none mt-4">
+            <div class="spinner-border" role="status">
+                <span class="sr-only">Cargando...</span>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        $(document).ready(function() {
+            $("#search-form").submit(function(e) {
+                e.preventDefault();
+                $("#loading-spinner").removeClass("d-none");
+                var searchRequest = $("#search_request").val();
+                var searchType = $("#search_type").val();
+                var isVerified = $("#is_verified").val();
+                var categoryId = $("#category_id").val();
+
+                var requestData = {
+                    "search_request": searchRequest,
+                    "search_type": searchType,
+                    "is_verified": isVerified,
+                    "category_id": categoryId
+                };
+                var startTime = new Date().getTime();
+                $.ajax({
+                    type: "POST",
+                    url: "http://18.226.107.203/facebook/search-profile",
+                    data: JSON.stringify(requestData),
+                    contentType: "application/json",
+                    success: function(response) {
+                        var endTime = new Date().getTime();
+                        var responseTime = (endTime - startTime) / 1000; 
+                        $("#loading-spinner").addClass("d-none");
+                        if (response.ok) {
+                         
+                            var results = response.data;
+                            
+
+                            // Limpia resultados anteriores
+                            $("#search-results").empty();
+                            $("#search-results").append("<p>Tiempo de respuesta: " + responseTime + " segundos</p>");
+                            // Muestra los resultados
+                            results.forEach(function(result) {
+                                var resultDiv = $("<div class='card mb-3'>");
+                                var cardBody = $("<div class='card-body'>");
+                                var cardTitle = $("<h5 class='card-title'>" + result.name + "</h5>");
+                                var cardTextType = $("<p class='card-text'>Tipo: " + result.type + "</p>");
+                                var cardTextVerified = $("<p class='card-text'>Verificado: " + result.is_verified + "</p>");
+                                var profileLink = $("<a href='" + result.url + "' class='btn btn-primary' target='_blank'>Ver perfil</a>");
+                                var profileImage = $("<img src='" + result.profile_photo + "' alt='Foto de perfil' class='img-fluid max-100' style='width:100px;'>");
+
+                                cardBody.append(cardTitle, cardTextType, cardTextVerified, profileLink);
+                                resultDiv.append(profileImage, cardBody);
+                                $("#search-results").append(resultDiv);
+                                
+                            });
+                        } else {
+                            $("#search-results").html("No se encontraron resultados.");
+                        }
+                    },
+                    error: function() {
+                        $("#loading-spinner").addClass("d-none");
+                        $("#search-results").html("Hubo un error en la solicitud.");
+                    }
+                });
+            });
+        });
+    </script>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+
+</body>
+</html>
